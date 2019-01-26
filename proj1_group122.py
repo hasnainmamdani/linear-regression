@@ -22,7 +22,7 @@ def load_data(filename):
     
     return training_data, validation_data, testing_data
 
-def pre_process(data_set):
+def pre_process(data_set, flag):
     #modularise data parts. 
     word_list=[]
     populatiry_score=[]
@@ -37,14 +37,15 @@ def pre_process(data_set):
         controversiality.append(point["controversiality"])      #keep feature as binary featire
         populatiry_score.append(point["popularity_score"])      #keep popularity score as number
 
-    word_list=list(np.concatenate(word_list))                   #change 2D list into one list
-    word_info=Counter(word_list)                                #use counter function to get measure of each word in dataset
-    most_common_words=word_info.most_common(160)                #get 160 most common words in the data set we are working with
+    if (flag == 1):
+        word_list=list(np.concatenate(word_list))                   #change 2D list into one list
+        word_info=Counter(word_list)                                #use counter function to get measure of each word in dataset
+        pre_process.most_common_words=word_info.most_common(160)                #get 160 most common words in the data set we are working with
 
     matrix=[]   
 
     for point in data_set:
-        matrix.append([point["text"].count(w[0]) for w in most_common_words])   #filling the count matrix row by row
+        matrix.append([point["text"].count(w[0]) for w in pre_process.most_common_words])   #filling the count matrix row by row
     
     mat=np.array(matrix)
 
@@ -86,16 +87,18 @@ def main():
     filename = "proj1_data.json"
     training_data, validation_data, testing_data = load_data(filename)
     
+    pre_process.most_common_words = list()
+    
     # pre-process data
-    train = pre_process(training_data)
+    train = pre_process(training_data, 1)
     X_train = train[0]
     y_train = train[1]
     
-    valid = pre_process(validation_data)
+    valid = pre_process(validation_data, 0)
     X_valid = valid[0]
     y_valid = valid[1]
     
-    test = pre_process(testing_data)
+    test = pre_process(testing_data, 0)
     X_test = test[0]
     y_test = test[1]
     
@@ -111,8 +114,8 @@ def main():
     #error_gd = np.linalg.norm(y_gd_valid_pred - y_valid)
     error_gd = mean_squared_error(y_valid, y_gd_valid_pred)
     
-    #print(error_cf)
-    #print(error_gd)
+    print(error_cf)
+    print(error_gd)
 
 if __name__ == '__main__':
     main()
