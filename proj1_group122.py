@@ -2,6 +2,7 @@ import json # we need to use the JSON package to load the data, since the data i
 from collections import Counter
 import numpy as np
 import sys
+from sklearn.metrics import mean_squared_error
 
 def load_data(filename):
     with open(filename) as fp:
@@ -103,12 +104,12 @@ def main():
     w_gd = reg_grad_desc(X_train, y_train)
     
     # evaluate performance
-    #TODO
-    #y_cf_valid_pred = np.matmul(X_valid, w_cf)
+    y_cf_valid_pred = np.matmul(X_valid, w_cf)
     #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
-   
-    #y_gd_valid_pred = np.matmul(X_valid, w_gd)
+    error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
+    y_gd_valid_pred = np.matmul(X_valid, w_gd)
     #error_gd = np.linalg.norm(y_gd_valid_pred - y_valid)
+    error_gd = mean_squared_error(y_valid, y_gd_valid_pred)
     
     #print(error_cf)
     #print(error_gd)
