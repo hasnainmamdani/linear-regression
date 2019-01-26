@@ -1,8 +1,11 @@
 import json # we need to use the JSON package to load the data, since the data is stored in JSON format
 from collections import Counter
+from sklearn.metrics import mean_squared_error
 import numpy as np
 import sys
-from sklearn.metrics import mean_squared_error
+import time
+import math
+import matplotlib.pyplot as plt
 
 def load_data(filename):
     with open(filename) as fp:
@@ -41,7 +44,7 @@ def pre_process(data_set, flag):
         word_list=list(np.concatenate(word_list))                   #change 2D list into one list
         word_info=Counter(word_list)                                #use counter function to get measure of each word in dataset
         pre_process.most_common_words=word_info.most_common(160)                #get 160 most common words in the data set we are working with
-
+    
     matrix=[]   
 
     for point in data_set:
@@ -60,9 +63,9 @@ def reg_closed_form(X_train, y_train):
     w = np.matmul(np.matmul(np.linalg.inv(np.matmul(X_train.transpose(), X_train)), X_train.transpose()), y_train)
     return w
 
-def reg_grad_desc(X_train, y_train):
+def reg_grad_desc(X_train, y_train, beta):
     i = 0
-    beta = 100
+    #beta = 100
     alpha = 1/(1 + beta*i)
     epsilon = 0.2
 
@@ -88,7 +91,6 @@ def main():
     training_data, validation_data, testing_data = load_data(filename)
     
     pre_process.most_common_words = list()
-    
     # pre-process data
     train = pre_process(training_data, 1)
     X_train = train[0]
@@ -102,20 +104,38 @@ def main():
     X_test = test[0]
     y_test = test[1]
     
-    # regress
-    w_cf = reg_closed_form(X_train, y_train)   
-    w_gd = reg_grad_desc(X_train, y_train)
-    
     # evaluate performance
-    y_cf_valid_pred = np.matmul(X_valid, w_cf)
+    #1) runtime, stability, and performance & different learning rates and init   
+    # regress
+    X_train_0 = np.array(X_train)[:,160:]
+    X_valid_0 = np.array(X_valid)[:,160:]
+    start = time.time_ns()/ (10 ** 9)
+    w_cf = reg_closed_form(X_train_0, y_train)   
+    end = time.time_ns() / (10 ** 9)
+    print('time in sec for wcf', end-start)
+    
+    start = time.time_ns() / (10 ** 9)
+    w_gd = reg_grad_desc(X_train_0, y_train, 100)
+    end = time.time_ns() / (10 ** 9)
+    print('time in sec for w_gf', end-start)
+    
+    y_cf_valid_pred = np.matmul(X_valid_0, w_cf)
     #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
     error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
-    y_gd_valid_pred = np.matmul(X_valid, w_gd)
+    y_gd_valid_pred = np.matmul(X_valid_0, w_gd)
     #error_gd = np.linalg.norm(y_gd_valid_pred - y_valid)
     error_gd = mean_squared_error(y_valid, y_gd_valid_pred)
     
-    print(error_cf)
-    print(error_gd)
+    print("RMSE error_cf: ", math.sqrt(error_cf))
+    print("RMSE error_gd for beta=100: ", math.sqrt(error_gd))
+    
+    # Visualising the Test set results
+    plt.plot(X_valid_0[:,0], y_valid, color = 'red')
+    plt.plot(X_valid_0[:,0], y_cf_valid_pred, color = 'blue')
+    plt.title('cf, 3 features model')
+    plt.xlabel('is_root')
+    plt.ylabel('popularity')
+    plt.show()
 
 if __name__ == '__main__':
     main()
