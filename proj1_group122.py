@@ -104,38 +104,75 @@ def main():
     X_test = test[0]
     y_test = test[1]
     
-    # evaluate performance
-    #1) runtime, stability, and performance & different learning rates and init   
-    # regress
+    # evaluate performance & regress
+    print('----------------------- Evaluation.1 ---------------------------')
     X_train_0 = np.array(X_train)[:,160:]
     X_valid_0 = np.array(X_valid)[:,160:]
+    
     start = time.time_ns()/ (10 ** 9)
     w_cf = reg_closed_form(X_train_0, y_train)   
     end = time.time_ns() / (10 ** 9)
-    print('time in sec for wcf', end-start)
-    
-    start = time.time_ns() / (10 ** 9)
-    w_gd = reg_grad_desc(X_train_0, y_train, 100)
-    end = time.time_ns() / (10 ** 9)
-    print('time in sec for w_gf', end-start)
+    cf_exec_time = end-start
+    print('time in sec for wcf(3 features) ', cf_exec_time)
     
     y_cf_valid_pred = np.matmul(X_valid_0, w_cf)
     #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
     error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
-    y_gd_valid_pred = np.matmul(X_valid_0, w_gd)
-    #error_gd = np.linalg.norm(y_gd_valid_pred - y_valid)
-    error_gd = mean_squared_error(y_valid, y_gd_valid_pred)
+    print("RMSE error_cf(3 features): ", math.sqrt(error_cf))
     
-    print("RMSE error_cf: ", math.sqrt(error_cf))
-    print("RMSE error_gd for beta=100: ", math.sqrt(error_gd))
+    for n in range(50,250,50):
+        start = time.time_ns() / (10 ** 9)
+        w_gd = reg_grad_desc(X_train_0, y_train, n)
+        end = time.time_ns() / (10 ** 9)
+        print('time in sec for w_gf(3 features) %f for beta %d'%(end-start, n))
+    
+        y_gd_valid_pred = np.matmul(X_valid_0, w_gd)
+        #error_gd = np.linalg.norm(y_gd_valid_pred - y_valid)
+        error_gd = mean_squared_error(y_valid, y_gd_valid_pred)
+        print("RMSE error_gd %f(3 features) for beta %d"%(math.sqrt(error_gd), n))
+    
+    print('----------------------- Evaluation.2 ---------------------------')
+    print('')
+    temp0 = np.array(X_train)[:, 0:60]
+    temp1 = np.array(X_train)[:,160:]
+    X_train_60 = np.hstack((temp0,temp1))
+    temp0 = np.array(X_valid)[:, 0:60]
+    temp1 = np.array(X_valid)[:,160:]
+    X_valid_60 = np.hstack((temp0,temp1))
+    start = time.time_ns()/ (10 ** 9)
+    w_cf = reg_closed_form(X_train_60, y_train)   
+    end = time.time_ns() / (10 ** 9)
+    cf_exec_time = end-start
+    print('time in sec for wcf(60+ features) ', cf_exec_time)
+    
+    y_cf_valid_pred = np.matmul(X_valid_60, w_cf)
+    #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
+    error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
+    print("RMSE error_cf(60+ features): ", math.sqrt(error_cf))
+    print('')
+    
+    start = time.time_ns()/ (10 ** 9)
+    w_cf = reg_closed_form(X_train, y_train)   
+    end = time.time_ns() / (10 ** 9)
+    cf_exec_time = end-start
+    print('time in sec for wcf(160+ features) ', cf_exec_time)
+    
+    y_cf_valid_pred = np.matmul(X_valid, w_cf)
+    #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
+    error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
+    print("RMSE error_cf(160+ features): ", math.sqrt(error_cf))
+    print('')
+    print('----------------------- Evaluation.2 ---------------------------')
+    print('')
+    
     
     # Visualising the Test set results
-    plt.plot(X_valid_0[:,0], y_valid, color = 'red')
+"""    plt.plot(X_valid_0[:,0], y_valid, color = 'red')
     plt.plot(X_valid_0[:,0], y_cf_valid_pred, color = 'blue')
     plt.title('cf, 3 features model')
     plt.xlabel('is_root')
     plt.ylabel('popularity')
     plt.show()
-
+"""
 if __name__ == '__main__':
     main()
