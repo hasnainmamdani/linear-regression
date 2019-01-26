@@ -130,6 +130,7 @@ def main():
         #error_gd = np.linalg.norm(y_gd_valid_pred - y_valid)
         error_gd = mean_squared_error(y_valid, y_gd_valid_pred)
         print("RMSE error_gd %f(3 features) for beta %d"%(math.sqrt(error_gd), n))
+    print('')
     
     print('----------------------- Evaluation.2 ---------------------------')
     print('')
@@ -139,35 +140,52 @@ def main():
     temp0 = np.array(X_valid)[:, 0:60]
     temp1 = np.array(X_valid)[:,160:]
     X_valid_60 = np.hstack((temp0,temp1))
+    
     start = time.time_ns()/ (10 ** 9)
     w_cf = reg_closed_form(X_train_60, y_train)   
     end = time.time_ns() / (10 ** 9)
     cf_exec_time = end-start
-    print('time in sec for wcf(60+ features) ', cf_exec_time)
+    print('exec time in sec for wcf(60+ features) ', cf_exec_time)
     
     y_cf_valid_pred = np.matmul(X_valid_60, w_cf)
     #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
     error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
-    print("RMSE error_cf(60+ features): ", math.sqrt(error_cf))
+    print("RMSE error_cf(60+ features)  for validation set: ", math.sqrt(error_cf))
     print('')
     
+    y_cf_train_pred = np.matmul(X_train_60, w_cf)
+    error_cf = mean_squared_error(y_train, y_cf_train_pred)
+    print("RMSE error_cf(60+ features) for train set: ", math.sqrt(error_cf))
+    print('')
+
+    print('--------------------------------------------------')
     start = time.time_ns()/ (10 ** 9)
     w_cf = reg_closed_form(X_train, y_train)   
     end = time.time_ns() / (10 ** 9)
     cf_exec_time = end-start
-    print('time in sec for wcf(160+ features) ', cf_exec_time)
+    print('exec time in sec for wcf(160+ features): ', cf_exec_time)
     
     y_cf_valid_pred = np.matmul(X_valid, w_cf)
     #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
     error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
-    print("RMSE error_cf(160+ features): ", math.sqrt(error_cf))
-    print('')
-    print('----------------------- Evaluation.2 ---------------------------')
+    print("RMSE error_cf(160+ features) for validation set: ", math.sqrt(error_cf))
     print('')
     
-    
+    y_cf_train_pred = np.matmul(np.array(X_train), w_cf)
+    error_cf = mean_squared_error(y_train, y_cf_train_pred)
+    print("RMSE error_cf(160+ train) for train set: ", math.sqrt(error_cf))
+    print('')
+    print('----------------------- Evaluation.3 ---------------------------')
+    print('')
+    print('')
+    print('----------------------- Evaluation.4 ---------------------------')
+    print('')
+    y_cf_test_pred = np.matmul(X_test, w_cf)
+    error_cf = mean_squared_error(y_test, y_cf_test_pred)
+    print("RMSE error_cf(160+ features) for test set: ", math.sqrt(error_cf))
+    print('')
     # Visualising the Test set results
-"""    plt.plot(X_valid_0[:,0], y_valid, color = 'red')
+""" plt.plot(X_valid_0[:,0], y_valid, color = 'red')
     plt.plot(X_valid_0[:,0], y_cf_valid_pred, color = 'blue')
     plt.title('cf, 3 features model')
     plt.xlabel('is_root')
