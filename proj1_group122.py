@@ -59,6 +59,52 @@ def pre_process(data_set, flag):
     
     return (mat, np.matrix(populatiry_score).transpose())       # the return a tuple of a matrix (160 # of words, is_root, Controversiality, children) and the response variable
 
+def preprocess2(data_set, flag):
+    #modularise data parts. 
+    word_list=[]
+    populatiry_score=[]
+    children=[]
+    controversiality=[]
+    is_root=[]
+
+    feature1=[]
+    feature2=[]
+    feature3=[]
+
+    for point in data_set:
+        point["text"]= point["text"].lower().split()            #changing text into a list of words 
+        word_list.append(point["text"])                         #making a list of all the words in our data set
+        is_root.append(1 if point['is_root'] else 0 )           #change is_root feature to binary feature
+        children.append(point["children"])                      #keep children as quantitavice feature
+        controversiality.append(point["controversiality"])      #keep feature as binary featire
+        feature1.append(len(point["text"])*point["children"])   #seems we should take into account the size of each text
+
+        root=1 if point['is_root'] else 0 
+        feature2.append(root*point["controversiality"])         #controversial root comments would tend to have more popularity
+        feature3.append(root*point["children"])                 #number of children to root comment tells you how popular it is
+
+
+        populatiry_score.append(point["popularity_score"])      #keep popularity score as number
+
+    if (flag == 1):
+        word_list=list(np.concatenate(word_list))                   #change 2D list into one list
+        word_info=Counter(word_list)                                #use counter function to get measure of each word in dataset
+        pre_process.most_common_words=word_info.most_common(160)                #get 160 most common words in the data set we are working with
+    
+    matrix=[]   
+
+    for point in data_set:
+        matrix.append([point["text"].count(w[0]) for w in pre_process.most_common_words])   #filling the count matrix row by row
+    
+    mat=np.array(matrix)
+
+    for x in [is_root,controversiality,children,feature1,feature2,feature3]:
+        mat=(np.hstack((mat, np.matrix(x).transpose())))        #adding the other features to our deisgn matrix. 
+    
+    mat = np.hstack((np.ones((mat.shape[0],1)), mat))           #offset term
+    
+    return (mat, np.matrix(populatiry_score).transpose())       # the return a tuple of a matrix (160 # of words, is_root, Controversiality, children) and the response variable
+
 def reg_closed_form(X_train, y_train):
     w = np.matmul(np.matmul(np.linalg.inv(np.matmul(X_train.transpose(), X_train)), X_train.transpose()), y_train)
     return w
