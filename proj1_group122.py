@@ -10,29 +10,56 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
 
 def preprocess2(training_data, validation_data, testing_data):
+    #new features
+    feature1=[]
+    feature2=[]
+    feature3=[]
     text_list=[]
     for point in training_data:
         text_list.append(point["text"])
+        feature1.append(len(point["text"])*point["children"])   #seems we should take into account the size of each text
+        root=1 if point['is_root'] else 0
+        feature2.append(root*point["controversiality"])         #controversial root comments would tend to have more popularity
+        feature3.append(root*point["children"])                 #number of children to root comment tells you how popular it is
+
     vect = TfidfVectorizer(max_features=160, max_df=4500, min_df=200)
     dtm = vect.fit_transform(text_list)
     msg0 = pd.DataFrame(dtm.toarray(), columns=vect.get_feature_names())
     msg0=msg0.values #numpy array
+    msg_0=(msg0,feature1,feature2,feature3)
 
+    #new features
+    feature1=[]
+    feature2=[]
+    feature3=[]
     text_list=[]
     for point in validation_data:
         text_list.append(point["text"])
+        feature1.append(len(point["text"])*point["children"])   #seems we should take into account the size of each text
+        root=1 if point['is_root'] else 0
+        feature2.append(root*point["controversiality"])         #controversial root comments would tend to have more popularity
+        feature3.append(root*point["children"])                 #number of children to root comment tells you how popular it is
     validdtm = vect.transform(text_list)
     msg1 = pd.DataFrame(validdtm.toarray(), columns=vect.get_feature_names())
     msg1=msg1.values #numpy array
+    msg_1=(msg1,feature1,feature2,feature3)
 
+    feature1=[]
+    feature2=[]
+    feature3=[]
     text_list=[]
     for point in testing_data:
         text_list.append(point["text"])
+        feature1.append(len(point["text"])*point["children"])   #seems we should take into account the size of each text
+        root=1 if point['is_root'] else 0
+        feature2.append(root*point["controversiality"])         #controversial root comments would tend to have more popularity
+        feature3.append(root*point["children"])                 #number of children to root comment tells you how popular it is
     testdtm = vect.transform(text_list)
     msg2 = pd.DataFrame(testdtm.toarray(), columns=vect.get_feature_names())
     msg2=msg2.values #numpy array
+    msg_2=(msg2,feature1,feature2,feature3)
     
-    return msg0, msg1, msg2
+    return msg_0, msg_1, msg_2
 
 def load_data(filename):
     with open(filename) as fp:
@@ -79,51 +106,6 @@ def pre_process(data_set, lines):
     
     return (mat, np.matrix(populatiry_score).transpose())       # the return a tuple of a matrix (160 # of words, is_root, Controversiality, children) and the response variable
 
-def preprocess2(data_set, flag):
-    #modularise data parts. 
-    word_list=[]
-    populatiry_score=[]
-    children=[]
-    controversiality=[]
-    is_root=[]
-
-    feature1=[]
-    feature2=[]
-    feature3=[]
-
-    for point in data_set:
-        point["text"]= point["text"].lower().split()            #changing text into a list of words 
-        word_list.append(point["text"])                         #making a list of all the words in our data set
-        is_root.append(1 if point['is_root'] else 0 )           #change is_root feature to binary feature
-        children.append(point["children"])                      #keep children as quantitavice feature
-        controversiality.append(point["controversiality"])      #keep feature as binary featire
-        feature1.append(len(point["text"])*point["children"])   #seems we should take into account the size of each text
-
-        root=1 if point['is_root'] else 0 
-        feature2.append(root*point["controversiality"])         #controversial root comments would tend to have more popularity
-        feature3.append(root*point["children"])                 #number of children to root comment tells you how popular it is
-
-
-        populatiry_score.append(point["popularity_score"])      #keep popularity score as number
-
-    if (flag == 1):
-        word_list=list(np.concatenate(word_list))                   #change 2D list into one list
-        word_info=Counter(word_list)                                #use counter function to get measure of each word in dataset
-        pre_process.most_common_words=word_info.most_common(160)                #get 160 most common words in the data set we are working with
-    
-    matrix=[]   
-
-    for point in data_set:
-        matrix.append([point["text"].count(w[0]) for w in pre_process.most_common_words])   #filling the count matrix row by row
-    
-    mat=np.array(matrix)
-
-    for x in [is_root,controversiality,children,feature1,feature2,feature3]:
-        mat=(np.hstack((mat, np.matrix(x).transpose())))        #adding the other features to our deisgn matrix. 
-    
-    mat = np.hstack((np.ones((mat.shape[0],1)), mat))           #offset term
-    
-    return (mat, np.matrix(populatiry_score).transpose())       # the return a tuple of a matrix (160 # of words, is_root, Controversiality, children) and the response variable
 
 def reg_closed_form(X_train, y_train):
     w = np.matmul(np.matmul(np.linalg.inv(np.matmul(X_train.transpose(), X_train)), X_train.transpose()), y_train)
@@ -187,6 +169,7 @@ def main():
     X_test = test[0]
     y_test = test[1]
     
+
     # evaluate performance & regress
     print('----------------------- Evaluation.1 ---------------------------')
     X_train_0 = np.array(X_train)[:,160:]
@@ -258,28 +241,37 @@ def main():
     error_cf = mean_squared_error(y_train, y_cf_train_pred)
     print("RMSE error_cf(160+ train) for train set: ", math.sqrt(error_cf))
     print('')
+    
     print('----------------------- Evaluation.3 ---------------------------')
     print('')
     training_data, validation_data, testing_data = load_data(filename)
     msg0, msg1, msg2 = preprocess2(training_data, validation_data, testing_data)
     temp0 = np.array(X_train)[:, 160:]
-    temp1 = np.hstack((msg0, temp0))
-    w_cf = reg_closed_form(temp1, y_train)      
-    y_cf_train_pred = np.matmul(temp1, w_cf)
+
+    temp0=np.hstack((temp0, msg0[0]))
+    for feature in msg0[1:]:
+        temp0=np.hstack((temp0, np.matrix(feature).transpose()))
+    w_cf = reg_closed_form(temp0, y_train)      
+    y_cf_train_pred = np.matmul(temp0, w_cf)
     error_cf = mean_squared_error(y_train, y_cf_train_pred)
     print("RMSE error_cf(Tfidf) for Training set: ", math.sqrt(error_cf))
     print('') 
+
     temp0 = np.array(X_valid)[:, 160:]
-    temp1 = np.hstack((msg1, temp0))
-    w_cf = reg_closed_form(temp1, y_valid)      
-    y_cf_valid_pred = np.matmul(temp1, w_cf)
+    temp0=np.hstack((temp0, msg1[0]))
+    for feature in msg1[1:]:
+        temp0=np.hstack((temp0, np.matrix(feature).transpose()))
+    w_cf = reg_closed_form(temp0, y_valid)      
+    y_cf_valid_pred = np.matmul(temp0, w_cf)
     error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
     print("RMSE error_cf(Tfidf) for Validation set: ", math.sqrt(error_cf))       
     print('')
     temp0 = np.array(X_test)[:, 160:]
-    temp1 = np.hstack((msg2, temp0))
-    w_cf = reg_closed_form(temp1, y_test)      
-    y_cf_test_pred = np.matmul(temp1, w_cf)
+    temp0=np.hstack((temp0, msg2[0]))
+    for feature in msg2[1:]:
+        temp0=np.hstack((temp0, np.matrix(feature).transpose()))
+    w_cf = reg_closed_form(temp0, y_test)      
+    y_cf_test_pred = np.matmul(temp0, w_cf)
     error_cf = mean_squared_error(y_test, y_cf_test_pred)
     print("RMSE error_cf(Tfidf) for testing set: ", math.sqrt(error_cf))
     print('')
