@@ -171,34 +171,36 @@ def main():
     
 
     # evaluate performance & regress
-    print('----------------------- Evaluation.1 ---------------------------')
+    print('_______________________________ Evaluation.1 _____________________________')
+    print('')
     X_train_0 = np.array(X_train)[:,160:]
     X_valid_0 = np.array(X_valid)[:,160:]
-    
-    start = time.time_ns()/ (10 ** 9)
-    w_cf = reg_closed_form(X_train_0, y_train)   
-    end = time.time_ns() / (10 ** 9)
-    cf_exec_time = end-start
-    print('exec time in sec for wcf(3 features) ', cf_exec_time)
-    
-    y_cf_valid_pred = np.matmul(X_valid_0, w_cf)
-    #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
-    error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
-    print("RMSE error_cf(3 features): ", math.sqrt(error_cf))
     
     for n in range(50,250,50):
         start = time.time_ns() / (10 ** 9)
         w_gd = reg_grad_desc(X_train_0, y_train, n)
         end = time.time_ns() / (10 ** 9)
-        print('time in sec for w_gf(3 features) %f for beta %d'%(end-start, n))
-    
+        print('Execution time in sec for W-gradient-form (3 features) %f for beta = %d in learning-rate = (1/(1 + beta*i))'%(end-start, n))
         y_gd_valid_pred = np.matmul(X_valid_0, w_gd)
         #error_gd = np.linalg.norm(y_gd_valid_pred - y_valid)
         error_gd = mean_squared_error(y_valid, y_gd_valid_pred)
-        print("RMSE error_gd %f(3 features) for beta %d"%(math.sqrt(error_gd), n))
+        print("RMSE error gradien-form %f(3 features) for beta %d"%(math.sqrt(error_gd), n))
+        print('')
+
+    print('---------------------------------------------------------------------------')
     print('')
+    start = time.time_ns()/ (10 ** 9)
+    w_cf = reg_closed_form(X_train_0, y_train)   
+    end = time.time_ns() / (10 ** 9)
+    cf_exec_time = end-start
+    print('Execution time in sec for W-closed-form (3 features) ', cf_exec_time)
     
-    print('----------------------- Evaluation.2 ---------------------------')
+    y_cf_valid_pred = np.matmul(X_valid_0, w_cf)
+    #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
+    error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
+    print("RMSE error closed-form (3 features): ", math.sqrt(error_cf))
+    print('')
+    print('______________________________ Evaluation.2 ________________________________')
     print('')
     temp0 = np.array(X_train)[:, 0:60]
     temp1 = np.array(X_train)[:,160:]
@@ -211,38 +213,39 @@ def main():
     w_cf = reg_closed_form(X_train_60, y_train)   
     end = time.time_ns() / (10 ** 9)
     cf_exec_time = end-start
-    print('exec time in sec for wcf(60+ features) ', cf_exec_time)
-    
+    print('Execution time in sec for W-closed-form (+60 most-common-words features) ', cf_exec_time)
+    print('')
     y_cf_valid_pred = np.matmul(X_valid_60, w_cf)
     #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
     error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
-    print("RMSE error_cf(60+ features)  for validation set: ", math.sqrt(error_cf))
+    print("RMSE error closed-form (+60 most-common-words features)  for validation set: ", math.sqrt(error_cf))
     print('')
     
     y_cf_train_pred = np.matmul(X_train_60, w_cf)
     error_cf = mean_squared_error(y_train, y_cf_train_pred)
-    print("RMSE error_cf(60+ features) for train set: ", math.sqrt(error_cf))
+    print("RMSE error closed-form (+60 most_common-words features) for train set: ", math.sqrt(error_cf))
     print('')
 
-    print('--------------------------------------------------')
+    print('-----------------------------------------------------------------------')
+    print('')
     start = time.time_ns()/ (10 ** 9)
     w_cf = reg_closed_form(X_train, y_train)   
     end = time.time_ns() / (10 ** 9)
     cf_exec_time = end-start
-    print('exec time in sec for wcf(160+ features): ', cf_exec_time)
-    
+    print('Execution time in sec for W-closed-form(+160 most-common-words features): ', cf_exec_time)
+    print('')
     y_cf_valid_pred = np.matmul(X_valid, w_cf)
     #error_cf = np.linalg.norm(y_cf_valid_pred - y_valid)
     error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
-    print("RMSE error_cf(160+ features) for validation set: ", math.sqrt(error_cf))
+    print("RMSE error closed-form (+160 most-common-words features) for validation set: ", math.sqrt(error_cf))
     print('')
     
     y_cf_train_pred = np.matmul(np.array(X_train), w_cf)
     error_cf = mean_squared_error(y_train, y_cf_train_pred)
-    print("RMSE error_cf(160+ train) for train set: ", math.sqrt(error_cf))
+    print("RMSE error closed-form(+160 most-common-words features) for train set: ", math.sqrt(error_cf))
     print('')
     
-    print('----------------------- Evaluation.3 ---------------------------')
+    print('_______________________________ Evaluation.3 __________________________________')
     print('')
     training_data, validation_data, testing_data = load_data(filename)
     msg0, msg1, msg2 = preprocess2(training_data, validation_data, testing_data)
@@ -254,7 +257,7 @@ def main():
     w_cf = reg_closed_form(temp0, y_train)      
     y_cf_train_pred = np.matmul(temp0, w_cf)
     error_cf = mean_squared_error(y_train, y_cf_train_pred)
-    print("RMSE error_cf(Tfidf) for Training set: ", math.sqrt(error_cf))
+    print("RMSE error closed-form (160 words-Tfidf + 3 extra features) for Training set: ", math.sqrt(error_cf))
     print('') 
 
     temp0 = np.array(X_valid)[:, 160:]
@@ -264,7 +267,7 @@ def main():
     w_cf = reg_closed_form(temp0, y_valid)      
     y_cf_valid_pred = np.matmul(temp0, w_cf)
     error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
-    print("RMSE error_cf(Tfidf) for Validation set: ", math.sqrt(error_cf))       
+    print("RMSE error closed-form (160 words-Tfidf + 3 extra features) for Validation set: ", math.sqrt(error_cf))       
     print('')
     temp0 = np.array(X_test)[:, 160:]
     temp0=np.hstack((temp0, msg2[0]))
@@ -273,7 +276,9 @@ def main():
     w_cf = reg_closed_form(temp0, y_test)      
     y_cf_test_pred = np.matmul(temp0, w_cf)
     error_cf = mean_squared_error(y_test, y_cf_test_pred)
-    print("RMSE error_cf(Tfidf) for testing set: ", math.sqrt(error_cf))
+    print('_______________________________ Evaluation.4 ________________________________')
+    print('')
+    print("RMSE error for closed-form (160 words-Tfidf + 3 extra features) for testing set: ", math.sqrt(error_cf))
     print('')
     dist = np.abs(y_test - y_cf_test_pred)
     index = np.arange(0,1000,1)
@@ -284,8 +289,6 @@ def main():
     plt.xlabel('index')
     plt.ylabel('abs distance')
     plt.show()
-
-    print('----------------------- Evaluation.4 ---------------------------')
 
 if __name__ == '__main__':
     main()
