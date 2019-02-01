@@ -9,6 +9,25 @@ import matplotlib.pyplot as plt
 from sklearn.feature_extraction.text import TfidfVectorizer
 import pandas as pd
 
+def commonwords(training_data):
+    word_list=[]
+    for point in training_data:
+        word_list.append(point["text"].lower().split())
+    #making a list of all the words in our data set
+    word_list=list(np.concatenate(word_list))                   #change 2D list into one list
+    word_info=Counter(word_list)                                #use counter function to get measure of each word in dataset
+    most_common_words = word_info.most_common(160)                #get 160 most com
+    with open('most.txt', 'w') as f:
+        for item in most_common_words:
+            f.write(str(item[0]))
+            f.write('\n')
+    
+    f= open('most.txt', 'r')    
+    lines=f.read().split('\n')
+    f.close()    
+    del lines[-1]
+    return lines
+    
 def preprocess2(training_data, validation_data, testing_data):
     #new features
     feature1=[]
@@ -132,45 +151,7 @@ def reg_grad_desc(X_train, y_train, beta):
         
     return w
 
-def main():
-    
-    # load data
-    filename = "proj1_data.json"
-    training_data, validation_data, testing_data = load_data(filename)
-    
-    word_list=[]
-    for point in training_data:
-        #point["text"]= point["text"].lower().split()
-        word_list.append(point["text"].lower().split())
-    #making a list of all the words in our data set
-    word_list=list(np.concatenate(word_list))                   #change 2D list into one list
-    word_info=Counter(word_list)                                #use counter function to get measure of each word in dataset
-    most_common_words = word_info.most_common(160)                #get 160 most com
-    with open('most.txt', 'w') as f:
-        for item in most_common_words:
-            f.write(str(item[0]))
-            f.write('\n')
-    
-    f= open('most.txt', 'r')    
-    lines=f.read().split('\n')
-    f.close()    
-    del lines[-1]
-    
-    # pre-process data
-    train = pre_process(training_data, lines)
-    X_train = train[0]
-    y_train = train[1]
-    
-    valid = pre_process(validation_data, lines)
-    X_valid = valid[0]
-    y_valid = valid[1]
-    
-    test = pre_process(testing_data, lines)
-    X_test = test[0]
-    y_test = test[1]
-    
-
-    # evaluate performance & regress
+def eval1(X_train, X_valid, y_train, y_valid):
     print('_______________________________ Evaluation.1 _____________________________')
     print('')
     X_train_0 = np.array(X_train)[:,160:]
@@ -200,6 +181,8 @@ def main():
     error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
     print("RMSE error closed-form (3 features): ", math.sqrt(error_cf))
     print('')
+    
+def eval2(X_train, X_valid, y_valid, y_train):
     print('______________________________ Evaluation.2 ________________________________')
     print('')
     temp0 = np.array(X_train)[:, 0:60]
@@ -244,7 +227,8 @@ def main():
     error_cf = mean_squared_error(y_train, y_cf_train_pred)
     print("RMSE error closed-form(+160 most-common-words features) for train set: ", math.sqrt(error_cf))
     print('')
-    
+ 
+def eval3(filename, X_train, y_train, X_valid, y_valid, X_test):   
     print('_______________________________ Evaluation.3 __________________________________')
     print('')
     training_data, validation_data, testing_data = load_data(filename)
@@ -269,15 +253,19 @@ def main():
     error_cf = mean_squared_error(y_valid, y_cf_valid_pred)
     print("RMSE error closed-form (160 words-Tfidf + 3 extra features) for Validation set: ", math.sqrt(error_cf))       
     print('')
+    return msg2
+    
+def eval4(msg2, X_test, y_test):
+    print('_______________________________ Evaluation.4 ________________________________')
+    print('')
     temp0 = np.array(X_test)[:, 160:]
     temp0=np.hstack((temp0, msg2[0]))
     for feature in msg2[1:]:
         temp0=np.hstack((temp0, np.matrix(feature).transpose()))
     w_cf = reg_closed_form(temp0, y_test)      
     y_cf_test_pred = np.matmul(temp0, w_cf)
-    error_cf = mean_squared_error(y_test, y_cf_test_pred)
-    print('_______________________________ Evaluation.4 ________________________________')
     print('')
+    error_cf = mean_squared_error(y_test, y_cf_test_pred)
     print("RMSE error for closed-form (160 words-Tfidf + 3 extra features) for testing set: ", math.sqrt(error_cf))
     print('')
     dist = np.abs(y_test - y_cf_test_pred)
@@ -289,6 +277,34 @@ def main():
     plt.xlabel('index')
     plt.ylabel('abs distance')
     plt.show()
+    
+def main():
+    
+    # load data
+    filename = "proj1_data.json"
+    training_data, validation_data, testing_data = load_data(filename)
+    
+
+    
+    lines = commonwords(training_data)
+    # pre-process data
+    train = pre_process(training_data, lines)
+    X_train = train[0]
+    y_train = train[1]
+    
+    valid = pre_process(validation_data, lines)
+    X_valid = valid[0]
+    y_valid = valid[1]
+    
+    test = pre_process(testing_data, lines)
+    X_test = test[0]
+    y_test = test[1]
+    
+    # evaluate performance & regress
+    eval1(X_train, X_valid, y_train, y_valid)
+    eval2(X_train, X_valid, y_valid, y_train)
+    msg2 = eval3(filename, X_train, y_train, X_valid, y_valid, X_test)
+    eval4(msg2, X_test, y_test)
 
 if __name__ == '__main__':
     main()
