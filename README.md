@@ -1,2 +1,2 @@
 # linear-regression
-See https://github.com/hasnainmamdani/linear-regression/blob/master/writeup.pdf
+See [writeup](writeup.pdf) and [specs](miniproject1_spec.pdf).
